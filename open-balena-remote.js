@@ -17,7 +17,7 @@ require('dotenv').config()
 const https = require('https');
 
 const options = {
-  key: fs.readFileSync('/key.key'),      // Path to your SSL private key file
+  key: fs.readFileSync('/private_key.key'),      // Path to your SSL private key file
   cert: fs.readFileSync('/certificate.crt')  // Path to your SSL certificate file
   };
 
