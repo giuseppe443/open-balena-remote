@@ -14,8 +14,14 @@ const uuid = require("uuid");
 const waitPort = require("wait-port");
 const fs = require('fs');
 require('dotenv').config()
+const https = require('https');
 
-const DEBUG = false;
+const options = {
+  key: fs.readFileSync('/path/to/key.key'),      // Path to your SSL private key file
+  cert: fs.readFileSync('/path/to/crt.crt')  // Path to your SSL certificate file
+  };
+
+const DEBUG = true;
 
 // port and host that base instance listens on
 const PORT = 10000;
@@ -183,7 +189,7 @@ async function initialRequestHandler (req, res, next) {
 const proxyMiddlewareConfig = {
   target: "",
   changeOrigin: true,
-  secure: false,
+  secure: true,
   ws: true,
   router: async (req) => {
     if (DEBUG) console.log("Received proxy request at " + ( req.protocol ? req.protocol : "ws" ) + "://" + req.rawHeaders[(req.rawHeaders.indexOf("host") !== -1 ? req.rawHeaders.indexOf("host") : req.rawHeaders.indexOf("Host")) + 1] + req.url);
@@ -343,10 +349,9 @@ async function startProxy(proxyPort, initialHandler) {
   newApp.use(createProxyMiddleware(proxyMiddlewareConfig));
   newApp.use(errorResponseHandler);
 
-  var newServer = newApp.listen(proxyPort, HOST, () => {
-    // add server to global object to allow subsequent access
+  const newServer = https.createServer(options, newApp).listen(proxyPort, HOST, () => {
     expressServers[newServer.address().port] = newServer;
-  });
+     });
   // wait for proxy server to come online
   await waitPort({host: "127.0.0.1", port: proxyPort});
 }
